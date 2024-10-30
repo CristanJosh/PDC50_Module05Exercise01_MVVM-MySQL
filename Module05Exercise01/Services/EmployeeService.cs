@@ -66,7 +66,7 @@ namespace Module05Exercise01.Services
             }
         }
 
-        public async Task<bool> DeleteEmployeeAsync(int employeeID)
+        public async Task<bool> DeleteEmployeeAsync(int EmployeeID)
         {
             try
             {
@@ -74,7 +74,7 @@ namespace Module05Exercise01.Services
                 {
                     await conn.OpenAsync();
                     var cmd = new MySqlCommand("DELETE FROM tblemployee WHERE EmployeeID = @EmployeeID", conn);
-                    cmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+                    cmd.Parameters.AddWithValue("@EmployeeID", EmployeeID);
 
                     var result = await cmd.ExecuteNonQueryAsync();
                     return result > 0;

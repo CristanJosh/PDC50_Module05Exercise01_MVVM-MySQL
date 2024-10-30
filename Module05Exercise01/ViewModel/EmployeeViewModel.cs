@@ -90,7 +90,7 @@ namespace Module05Exercise01.ViewModel
                 _selectedEmployee = value;
                 if (_selectedEmployee != null)
                 {
-                    // Populate the fields with selected employee's data
+                    // Populate the UI fields with the selected employee's details
                     NewEmployeeName = _selectedEmployee.Name;
                     NewEmployeeAddress = _selectedEmployee.Address;
                     NewEmployeeEmail = _selectedEmployee.Email;
@@ -98,13 +98,15 @@ namespace Module05Exercise01.ViewModel
                 }
                 else
                 {
-                    // Clear the fields if no employee is selected
+                    // Clear fields if no employee is selected
                     NewEmployeeName = string.Empty;
                     NewEmployeeAddress = string.Empty;
                     NewEmployeeEmail = string.Empty;
                     NewEmployeeContactNo = string.Empty;
                 }
+
                 OnPropertyChanged();
+                ((Command)DeleteEmployeeCommand).ChangeCanExecute(); // Update the delete command
             }
         }
 
@@ -160,6 +162,12 @@ namespace Module05Exercise01.ViewModel
                 StatusMessage = "Please fill in all the fields before adding.";
                 return;
             }
+
+            // Prompt for confirmation
+            var confirm = await Application.Current.MainPage.DisplayAlert("Confirm Addition",
+                $"Are you sure you want to add {NewEmployeeName}?", "Yes", "No");
+            if (!confirm) return; // Exit if the user does not confirm
+
             IsBusy = true;
             StatusMessage = "Adding new employee...";
 
@@ -175,6 +183,7 @@ namespace Module05Exercise01.ViewModel
                 var isSuccess = await _employeeService.AddEmployeeAsync(newEmployee);
                 if (isSuccess)
                 {
+                    // Clear the fields after adding
                     NewEmployeeName = string.Empty;
                     NewEmployeeAddress = string.Empty;
                     NewEmployeeEmail = string.Empty;
@@ -196,8 +205,10 @@ namespace Module05Exercise01.ViewModel
             finally
             {
                 IsBusy = false;
+                await LoadData();
             }
         }
+
 
         private async Task DeleteEmployee()
         {
@@ -228,6 +239,7 @@ namespace Module05Exercise01.ViewModel
             finally
             {
                 IsBusy = false;
+                await LoadData();
             }
         }
 
