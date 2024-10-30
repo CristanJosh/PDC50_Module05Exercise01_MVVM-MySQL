@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Module05Exercise01.ViewModel"
              x:Class="Module05Exercise01.View.ViewEmployee"
              Title="View Employee"
              BackgroundColor="#f0f8ff">
@@ -71,6 +72,13 @@
                                     <BoxView HeightRequest="1"
                                              BackgroundColor="#dcdcdc"
                                              Margin="0, 5"/>
+                                    <StackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                          Command="{Binding Source={RelativeSource AncestorType={x:Type local:EmployeeViewModel}},
+                                           Path=SelectedEmployeeCommand}"
+                                             CommandParameter="{Binding .}"/>
+                                    </StackLayout.GestureRecognizers>
+
                                 </StackLayout>
                             </ViewCell>
                         </DataTemplate>
@@ -96,6 +104,62 @@
                    HorizontalOptions="Center"
                    FontAttributes="Italic"
                    Margin="0, 20, 0, 0"/>
+
+            <!-- Add New Employee Section -->
+            <Label Text="Add New Employee"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="#4682B4"
+                   Margin="0, 30, 0, 10"/>
+
+            <Entry Placeholder="Name"
+                   Text="{Binding NewEmployeeName}"
+                   BackgroundColor="White"
+                   TextColor="#333"
+                   PlaceholderColor="#B0B0B0"
+                   Margin="0, 5"/>
+
+            <Entry Placeholder="Address"
+                   Text="{Binding NewEmployeeAddress}"
+                   BackgroundColor="White"
+                   TextColor="#333"
+                   PlaceholderColor="#B0B0B0"
+                   Margin="0, 5"/>
+
+            <Entry Placeholder="Email"
+                   Text="{Binding NewEmployeeEmail}"
+                   BackgroundColor="White"
+                   TextColor="#333"
+                   PlaceholderColor="#B0B0B0"
+                   Margin="0, 5"/>
+
+            <Entry Placeholder="Contact Number"
+                   Text="{Binding NewEmployeeContactNo}"
+                   BackgroundColor="White"
+                   TextColor="#333"
+                   PlaceholderColor="#B0B0B0"
+                   Margin="0, 5"/>
+
+            <!-- Add and Delete Buttons Section -->
+            <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Margin="0, 20, 0, 0">
+                <Button Text="Add Employee"
+                        Command="{Binding AddEmployeeCommand}"
+                        BackgroundColor="#32CD32"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="20"
+                        Padding="10, 5"/>
+
+                <Button Text="Delete Employee"
+                        Command="{Binding DeleteEmployeeCommand}"
+                        IsEnabled="{Binding IsEmployeeSelected}"
+                        BackgroundColor="#E74C3C"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="20"
+                        Padding="10, 5"
+                        Margin="10, 0, 0, 0"/>
+            </StackLayout>
 
         </VerticalStackLayout>
     </ScrollView>
