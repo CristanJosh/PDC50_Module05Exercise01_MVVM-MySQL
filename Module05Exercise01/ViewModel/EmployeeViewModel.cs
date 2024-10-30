@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Module05Exercise01.Model;
-using Module05Exercise01.Services;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using Module05Exercise01.Model;
+using Module05Exercise01.Services;
 
 namespace Module05Exercise01.ViewModel
 {
@@ -27,6 +24,7 @@ namespace Module05Exercise01.ViewModel
                 OnPropertyChanged();
             }
         }
+
         private string _statusMessage;
         public string StatusMessage
         {
@@ -38,15 +36,91 @@ namespace Module05Exercise01.ViewModel
             }
         }
 
-        public ICommand LoadDataCommand { get; }
+        // Properties for new employee input
+        private string _newEmployeeName;
+        public string NewEmployeeName
+        {
+            get => _newEmployeeName;
+            set
+            {
+                _newEmployeeName = value;
+                OnPropertyChanged();
+            }
+        }
 
-        //employeeserviceviewmodel
+        private string _newEmployeeAddress;
+        public string NewEmployeeAddress
+        {
+            get => _newEmployeeAddress;
+            set
+            {
+                _newEmployeeAddress = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _newEmployeeEmail;
+        public string NewEmployeeEmail
+        {
+            get => _newEmployeeEmail;
+            set
+            {
+                _newEmployeeEmail = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _newEmployeeContactNo;
+        public string NewEmployeeContactNo
+        {
+            get => _newEmployeeContactNo;
+            set
+            {
+                _newEmployeeContactNo = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Employee _selectedEmployee;
+        public Employee SelectedEmployee
+        {
+            get => _selectedEmployee;
+            set
+            {
+                _selectedEmployee = value;
+                if (_selectedEmployee != null)
+                {
+                    // Populate the fields with selected employee's data
+                    NewEmployeeName = _selectedEmployee.Name;
+                    NewEmployeeAddress = _selectedEmployee.Address;
+                    NewEmployeeEmail = _selectedEmployee.Email;
+                    NewEmployeeContactNo = _selectedEmployee.ContactNo;
+                }
+                else
+                {
+                    // Clear the fields if no employee is selected
+                    NewEmployeeName = string.Empty;
+                    NewEmployeeAddress = string.Empty;
+                    NewEmployeeEmail = string.Empty;
+                    NewEmployeeContactNo = string.Empty;
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand LoadDataCommand { get; }
+        public ICommand AddEmployeeCommand { get; }
+        public ICommand DeleteEmployeeCommand { get; }
+        public ICommand SelectedEmployeeCommand { get; }
 
         public EmployeeViewModel()
         {
             _employeeService = new EmployeeService();
             EmployeeList = new ObservableCollection<Employee>();
             LoadDataCommand = new Command(async () => await LoadData());
+            AddEmployeeCommand = new Command(async () => await AddEmployee());
+            DeleteEmployeeCommand = new Command(async () => await DeleteEmployee(), () => SelectedEmployee != null);
+            SelectedEmployeeCommand = new Command<Employee>(employee => SelectedEmployee = employee); // Add this line
 
             LoadData();
         }
@@ -55,17 +129,16 @@ namespace Module05Exercise01.ViewModel
         {
             if (IsBusy) return;
             IsBusy = true;
-            StatusMessage = "Loading Personal Data....";
+            StatusMessage = "Loading Employee Data....";
             try
             {
-                var personals = await _employeeService.GetAllEmployeesAsync();
+                var employees = await _employeeService.GetAllEmployeesAsync();
                 EmployeeList.Clear();
-                foreach (var personal in personals)
+                foreach (var employee in employees)
                 {
-                    EmployeeList.Add(personal);
+                    EmployeeList.Add(employee);
                 }
                 StatusMessage = "Data loaded successfully";
-
             }
             catch (Exception ex)
             {
@@ -77,11 +150,92 @@ namespace Module05Exercise01.ViewModel
             }
         }
 
+        private async Task AddEmployee()
+        {
+            if (IsBusy || string.IsNullOrWhiteSpace(NewEmployeeName) ||
+                string.IsNullOrWhiteSpace(NewEmployeeAddress) ||
+                string.IsNullOrWhiteSpace(NewEmployeeEmail) ||
+                string.IsNullOrWhiteSpace(NewEmployeeContactNo))
+            {
+                StatusMessage = "Please fill in all the fields before adding.";
+                return;
+            }
+            IsBusy = true;
+            StatusMessage = "Adding new employee...";
+
+            try
+            {
+                var newEmployee = new Employee
+                {
+                    Name = NewEmployeeName,
+                    Address = NewEmployeeAddress,
+                    Email = NewEmployeeEmail,
+                    ContactNo = NewEmployeeContactNo,
+                };
+                var isSuccess = await _employeeService.AddEmployeeAsync(newEmployee);
+                if (isSuccess)
+                {
+                    NewEmployeeName = string.Empty;
+                    NewEmployeeAddress = string.Empty;
+                    NewEmployeeEmail = string.Empty;
+                    NewEmployeeContactNo = string.Empty;
+                    StatusMessage = "New employee added successfully.";
+
+                    // Reload the data to reflect changes
+                    await LoadData();
+                }
+                else
+                {
+                    StatusMessage = "Failed to add the new employee.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Failed to add the new employee: {ex.Message}";
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private async Task DeleteEmployee()
+        {
+            if (SelectedEmployee == null) return;
+
+            var answer = await Application.Current.MainPage.DisplayAlert("Confirm Delete",
+                $"Are you sure you want to delete {SelectedEmployee.Name}?", "Yes", "No");
+            if (!answer) return;
+
+            IsBusy = true;
+            StatusMessage = "Deleting employee...";
+
+            try
+            {
+                var success = await _employeeService.DeleteEmployeeAsync(SelectedEmployee.EmployeeID);
+                StatusMessage = success ? "Employee deleted successfully!" : "Failed to delete employee.";
+
+                if (success)
+                {
+                    EmployeeList.Remove(SelectedEmployee);
+                    SelectedEmployee = null; // Clear selection
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error deleting employee: {ex.Message}";
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanged([CallerMemberName] string propertyname = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
